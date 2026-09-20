@@ -1,0 +1,6 @@
+Died at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/Diagnostics.pm line 19.
+
+--- DIAGNOSTICS REPORT ---
+Error [ERR_INVALID_LITERAL]: Invalid character in binary literal '8'b102' in ModulePort (Line 2)
+--------------------------
+
