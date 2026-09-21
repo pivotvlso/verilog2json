@@ -2,27 +2,18 @@
 
 This document tracks the currently known parser limitations and unsupported Verilog/SystemVerilog syntaxes in the `verilog2json` conversion tool.
 
-## 1. Unpacked Arrays
-The tool currently relies on regex to find variable names by assuming they appear at the absolute end of the declaration string before the semicolon (e.g., `([A-Za-z][A-Za-z0-9_]*)\s*$`). 
-Because of this, declaring **unpacked arrays** where brackets appear *after* the variable name will crash the parser.
+## 1. Supported Data Types
+The `ModulePort::populate_port_varga` subroutine currently handles `wire`, `reg`, `logic`, `integer`, `real`, `realtime`, and `time` keywords. 
+
+If a module port or local variable uses an unsupported net type (e.g., `wand`, `wor`, `tri`, `triand`, `trior`, `tri0`, `tri1`, `trireg`, `uwire`, `supply0`, `supply1`), the parser explicitly intercepts it and aborts with an `ERR_UNSUPPORTED_NET` diagnostic error.
 
 **Fails:**
 ```verilog
-wire unpacked_array [0:3];
+wand my_net;
+uwire my_uwire;
 ```
 
-## 2. Supported Data Types
-The `ModulePort::populate_port_varga` subroutine explicitly expects declarations to use either the `wire` or `reg` keywords. If a module port or local variable uses a different Verilog/SystemVerilog data type, the parser throws an `Unknown bareword` or `Missing port declaration` error.
-
-**Fails:**
-```verilog
-real real_val = 1.23;
-time t_val = 1ns;
-integer int_val = 1234;
-logic [7:0] sv_logic;
-```
-
-## 3. Real and Time Literals
+## 2. Real and Time Literals
 Numeric literal parsing (`convert_to_binary`) is strictly calibrated for standard integer-based literal expressions (binary, hex, decimal, octal).
 Floating point numbers and SystemVerilog time literals will not be evaluated and may corrupt JSON output or cause string-matching failures.
 
@@ -33,16 +24,35 @@ wire [63:0] float_exp = 123.4e-2;
 wire [63:0] time_val = 2ns;
 ```
 
-## 4. Array Initialization Literals
-The tool does not natively support SystemVerilog unpacked array initialization syntax. Because it relies heavily on simple regex splitting and matching, nested brackets and ticks confuse the parser's logic structure.
+## 3. Multiple Variables Per Line (Line-by-Line Parsing)
+Because `ModulePort.pm` parses files using an end-anchored regex state machine, it DOES NOT support comma-separated list declarations on a single line (e.g., `real a, b, c;`). If multiple variables are declared on the same line, the parser will fail to extract the intermediate variables and will likely crash or yield corrupt JSON metadata.
 
 **Fails:**
 ```verilog
-wire [7:0] my_array [0:1] = '{ 8'hAA, 8'hBB };
+wire [7:0] a, b, c;
+real x, y = 1.23, z;
 ```
 
-## 5. Line-by-Line Parsing Structure
-Because `ModulePort.pm` parses files using a line-by-line (`chomp($line1)`) state machine, highly condensed inline declarations or declarations aggressively spanning multiple lines without clean delimiter structures are prone to tripping up the regex matching.
+**Required Constraint:**
+Always declare exactly **one** variable per line (ending strictly with `;`).
 
-**Recommended Workaround:**
-Always declare one heavily delimited variable per line (ending strictly with `;`).
+**Passes:**
+```verilog
+wire [7:0] a;
+wire [7:0] b;
+wire [7:0] c;
+```
+
+## 4. Strings, Escaped Characters, and System Tasks
+The tool currently does not have logic to safely parse string literals (`"hello"`), escaped characters (`\n`, `\t`), or SystemVerilog system tasks (e.g., `$display`, `$finish`). These constructs will likely confuse the binary evaluator or cause the parser to crash when scanning blocks.
+
+**Fails:**
+```verilog
+string my_str = "hello world\n";
+initial begin
+    $display("Test: %s", my_str);
+end
+```
+
+## 5. Attributes
+Verilog attributes using the `(* ... *)` syntax are currently unsupported. To prevent regex parsing failures and string extraction errors, the parser aggressively and silently ignores (strips out) all attributes during the initial file sanitization loop. The tool will parse the underlying logic, but any metadata contained within the attributes is lost.

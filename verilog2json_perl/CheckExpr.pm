@@ -57,12 +57,12 @@ sub create_postfix {
             $j = pop @stack;
             $stack_length -= 1;
             if ($j eq '(') {
-                die "Error from create_postfix: Brackets empty";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: Brackets empty", -1);
             }
             while ($j ne '(') {
                 push @output,$j;
                 if (!@stack) {
-                    die "Error from create_postfix: No start brackets found";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: No start brackets found", -1);
                 }
                 $j = pop @stack;
                 $stack_length -= 1;

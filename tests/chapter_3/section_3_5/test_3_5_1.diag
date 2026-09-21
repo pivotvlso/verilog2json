@@ -1,0 +1,4 @@
+Global symbol "$line_no" requires explicit package name (did you forget to declare "my $line_no"?) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/CheckExpr.pm line 60.
+Global symbol "$line_no" requires explicit package name (did you forget to declare "my $line_no"?) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/CheckExpr.pm line 65.
+Compilation failed in require at verilog2json.pl line 11.
+BEGIN failed--compilation aborted at verilog2json.pl line 11.

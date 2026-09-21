@@ -26,6 +26,11 @@ module test_3_5_1();
 
     // Syntax 3-1: Unsized Based Numbers
     wire [31:0] unsized_hex = 'hF;
+
+    integer my_int = 32'd100;
+    logic [7:0] my_logic = 8'hFF;
+    logic my_logic_bit;
+
     wire [31:0] unsized_dec = 'd12;
     wire [31:0] unsized_bin = 'b1010;
     

@@ -1,15 +1,8 @@
-perl: warning: Setting locale failed.
-perl: warning: Please check that your locale settings:
-	LC_ALL = (unset),
-	(possibly more locale environment variables)
-	LANG = "en_US.UTF-8"
-    are supported and installed on your system.
-perl: warning: Falling back to the system default locale ("English_India.1252").
-Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 435.
-Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 459.
-Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 435.
-Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 459.
-Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 435.
-Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 459.
-Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 435.
-Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 459.
+Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 482.
+Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 506.
+Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 482.
+Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 506.
+Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 482.
+Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 506.
+Argument "" isn't numeric in numeric lt (<) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 482.
+Argument "" isn't numeric in numeric ne (!=) at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/ModulePort.pm line 506.

@@ -22,7 +22,7 @@ sub check_type {
 
 
     } else {
-        die "Error from Check_Type::check_type proc; Unknown bareword $line1";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from Check_Type::check_type proc; Unknown bareword $line1", $line_no);
     }
     $line1 =~ s/$first_word//;
     $line1 =~ s/\s//;
@@ -34,7 +34,7 @@ sub check_type {
         
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at CheckType::check_type after first_word";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::check_type after first_word", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -45,7 +45,7 @@ sub check_type {
         $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{"प्रतिरूपनाम"} = $second_word;
 
     } else {
-        die "Error from Check_Type::check_type proc; Unknown bareword $line1";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from Check_Type::check_type proc; Unknown bareword $line1", $line_no);
     }
     $line1 =~ s/$second_word//;
     $line1 =~ s/\s//;
@@ -55,7 +55,7 @@ sub check_type {
     while ($line1 =~ /^$/) {   
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at CheckType::check_type after second_word";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::check_type after second_word", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -66,13 +66,13 @@ sub check_type {
         ($line1,$line_no) = parse_instantiation($line1,$line_no);
 
     } else {
-        die "Need to update in CheckType::check_type";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Need to update in CheckType::check_type", $line_no);
     }
     
     if ($line1 =~ /^\s*$/) {
         return $line_no;
     } else {
-        die " Need to handle unknown statements in CheckType::check_type with bareword $line1\n";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", " Need to handle unknown statements in CheckType::check_type with bareword $line1\n", $line_no);
     }
 }
 
@@ -82,7 +82,7 @@ sub parse_instantiation {
     while ($line1 =~ /^$/) {   
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at CheckType::check_type after second_word";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::check_type after second_word", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -94,7 +94,7 @@ sub parse_instantiation {
         ($line1,$line_no) = ordered_port_connection($line1,$line_no);
 
     } else {
-        die "Error in module instantiation in CheckType::parse_instantion\n";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in module instantiation in CheckType::parse_instantion\n", $line_no);
     }
     return ($line1,$line_no);
 }
@@ -106,13 +106,13 @@ sub named_port_connection {
         if ($line1 =~ /^\s*\./) {
             $line1 =~ s/^\s*\.//;
         } else {
-            die "Missing \. in CheckType::named_port_connection\n";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Missing \. in CheckType::named_port_connection\n", $line_no);
         }
         
         while ($line1 =~ /^$/) {   
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at CheckType::named_port_connection after second_word";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -127,13 +127,13 @@ sub named_port_connection {
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"रूपद्वारम्"} = $1;
 
         } else {
-            die "Error from CheckType::named_port_connection with bareword $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from CheckType::named_port_connection with bareword $line1", $line_no);
         }
 
         while ($line1 =~ /^\s*$/) {   
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at CheckType::named_port_connection after second_word";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -142,19 +142,19 @@ sub named_port_connection {
         if ($line1 =~ /\(/) {
             $line1 =~ s/\(//;
         } else {
-            die "Error in CheckType::named_port_connection";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::named_port_connection", $line_no);
         }
         if ($line1 =~ s/^\s*([A-Za-z][A-Za-z0-9_]*)\s*//) {
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{"द्वारसंयोजनम्"} = $1;
 
         } else {
-            die "Error from CheckType::named_port_connection with bareword $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from CheckType::named_port_connection with bareword $line1", $line_no);
         }
 
         while ($line1 =~ /^$/) {   
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at CheckType::named_port_connection after second_word";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -167,20 +167,20 @@ sub named_port_connection {
             while ($line1 =~ /^$/) {   
                 $line_no = $line_no+1;
                 if ($line_no > $VerilogParser::max_line) {
-                    die "Max line reached at CheckType::named_port_connection after second_word";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
                 }
                 $line1 .= $VerilogParser::verilog_file[$line_no];
                 chomp($line1);
                 $line1 =~ s/\s*//g;
             }
         } else {
-            die "Error in CheckType::named_port_connection with extra bareword $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::named_port_connection with extra bareword $line1", $line_no);
         }
     }
     while ($line1 =~ /^\s*$/) {   
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at CheckType::named_port_connection after second_word";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -210,13 +210,13 @@ sub ordered_port_connection {
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"प्रकारः"} = "द्वारक्रमः";
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारक्रमः"} = $instance_port_no;
         } else {
-            die "Error in CheckType::ordered_port_connection";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::ordered_port_connection", $line_no);
         }
 
         while ($line1 =~ /^$/) {   
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at CheckType::named_port_connection after second_word";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -229,14 +229,14 @@ sub ordered_port_connection {
             while ($line1 =~ /^\s*$/) {   
                 $line_no = $line_no+1;
                 if ($line_no > $VerilogParser::max_line) {
-                    die "Max line reached at CheckType::named_port_connection after second_word";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
                 }
                 $line1 .= $VerilogParser::verilog_file[$line_no];
                 chomp($line1);
                 $line1 =~ s/\s*//g;
             }
         } else {
-            die "Error in CheckType::ordered_port_connection with extra bareword $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::ordered_port_connection with extra bareword $line1", $line_no);
         }
 
     }

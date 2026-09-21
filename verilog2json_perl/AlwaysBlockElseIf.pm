@@ -16,7 +16,7 @@ sub always_block_elseif {
     while ($line1 =~ /^$/) {
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at AlwaysBlockIf::always_block_elseif";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at AlwaysBlockIf::always_block_elseif", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -28,13 +28,13 @@ sub always_block_elseif {
         $conditional_expr1 = $1;
         @conditional_expr = CheckExpr::create_postfix($conditional_expr1);
     } else {
-        die "Error from AlwaysBlockElseIf::always_block_else_if no proper expression";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from AlwaysBlockElseIf::always_block_else_if no proper expression", $line_no);
     }
     $line1 =~ s/\($conditional_expr1\)//;
     while ($line1 =~ /^$/) {
         $line_no = $line_no+1;
         if ($line_no > $VerilogParser::max_line) {
-            die "Max line reached at check_module";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at check_module", $line_no);
         }
         $line1 .= $VerilogParser::verilog_file[$line_no];
         chomp($line1);
@@ -90,7 +90,7 @@ sub always_block_elseif {
         while ($line1 =~ /^$/) {
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at always_comb_if";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at always_comb_if", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -100,7 +100,7 @@ sub always_block_elseif {
             if ($expect_end == 1) {
                 $end_occurred = 1
             } else {
-                die "Extra end present";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Extra end present", $line_no);
                 $end_occurred =1;
             }
 
@@ -157,9 +157,9 @@ sub always_block_elseif {
 
 
         } elsif ($line1 =~ /endmodule|always/) {
-            die "Missing end at $line_no with line $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Missing end at $line_no with line $line1", $line_no);
         } else {
-            die "Error occured $line1";
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error occured $line1", $line_no);
         }
         if ($end_occurred) {
             last;

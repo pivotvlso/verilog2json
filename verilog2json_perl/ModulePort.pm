@@ -28,11 +28,18 @@ sub get_ports {
         
     }
     chomp ($line1);
-    $line1 =~ /\((.*)\);/;
-    my $port_list = $1;
-    my @port_array = split (/,/,$port_list);
-    foreach my $port (@port_array) {
-        populate_port($port, $line_no);
+    
+    # Strip any parameter lists e.g. #(parameter W = 8)
+    while ($line1 =~ s/#\s*\((?:[^)(]*(?:\([^)(]*\)[^)(]*)*)*\)//g) {}
+    
+    if ($line1 =~ /\((.*)\)\s*;/s) {
+        my $port_list = $1;
+        if (defined $port_list && $port_list !~ /^\s*$/) {
+            my @port_array = split (/,/,$port_list);
+            foreach my $port (@port_array) {
+                populate_port($port, $line_no);
+            }
+        }
     }
     return $line_no;
 }
@@ -54,9 +61,9 @@ sub populate_port {
     #$JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"आद्यसूचकः"} = 0;
     #$JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"अन्त्यसूचकः"} =0;
     $port_ordering++;
+    $port_inst =~ s/\b$port_name\b//;
     if ($port_inst !~ /^\s*$/) {
         populate_port_direction($port_name, $port_inst, $line_no);
-
     }
     
 }
@@ -132,6 +139,23 @@ sub populate_port_varga {
         } elsif ($port_desc =~ /reg/ ) {
             $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
             $port_desc =~ s/reg//;
+        } elsif ($port_desc =~ /logic/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $port_desc =~ s/logic//;
+        } elsif ($port_desc =~ /integer/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $port_desc =~ s/integer/signed [31:0]/;
+        } elsif ($port_desc =~ /realtime/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"वास्तविकम्"} = "सत्यम्";
+            $port_desc =~ s/realtime/signed [63:0]/;
+        } elsif ($port_desc =~ /real/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"वास्तविकम्"} = "सत्यम्";
+            $port_desc =~ s/real/signed [63:0]/;
+        } elsif ($port_desc =~ /time/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $port_desc =~ s/time/[63:0]/;
         } else {
             Diagnostics::report_diagnostic("Error", "ERR_MISSING_PORT_DECL", "Missing port declaration", $line_no);
         }
@@ -191,9 +215,14 @@ sub populate_port_varga {
                 $target_bitwidth *= (abs($msb - $lsb) + 1);
             }
         }
-        my ($bin_val, $val_is_signed) = convert_to_binary($initial_value, $target_bitwidth, $line_no);
+        my ($bin_val, $val_is_signed, $metadata) = convert_to_binary($initial_value, $target_bitwidth, $line_no);
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"मूल्यम्"} = $bin_val;
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"चिह्नितम्"} = $val_is_signed ? "सत्यम्" : "असत्यम्";
+        if (defined $metadata) {
+            foreach my $k (keys %$metadata) {
+                $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{$k} = $metadata->{$k};
+            }
+        }
     } else {
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"मूल्यम्"} = "";
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"चिह्नितम्"} = "असत्यम्";
@@ -348,7 +377,8 @@ sub parse_array_literal {
     my $any_signed = "असत्यम्";
     foreach my $elem (@elements) {
         $elem =~ s/^\s+|\s+$//g;
-        my ($parsed, $signed) = convert_to_binary($elem, $target_size, $line_no);
+        my ($parsed, $signed, $meta) = convert_to_binary($elem, $target_size, $line_no);
+        $any_signed = 1 if $signed;
         push @parsed_elements, $parsed;
         $any_signed = "सत्यम्" if $signed eq "सत्यम्";
     }
@@ -362,6 +392,23 @@ sub convert_to_binary {
     # Parse unpacked array literals dynamically
     if ($val =~ /^\s*'\{/) {
         return parse_array_literal($val, $target_size, $line_no);
+    }
+
+    # Parse time literals (e.g. 2ns, 1.5us)
+    if ($val =~ /^\s*([\d\.]+)\s*(s|ms|us|ns|ps|fs)\s*$/) {
+        my $num = $1;
+        my $unit = $2;
+        # Evaluate to 64-bit unsigned binary integer
+        my $bin_str = sprintf("%064b", int($num));
+        return ($bin_str, 0, { "कालम्" => "सत्यम्", "काल_एककम्" => $unit }); 
+    }
+
+    # Parse floating-point literals (e.g. 1.23, 123.4e-2)
+    if ($val =~ /^\s*[-+]?[0-9]*\.[0-9]+(?:[eE][-+]?[0-9]+)?\s*$/ || $val =~ /^\s*[-+]?[0-9]+[eE][-+]?[0-9]+\s*$/) {
+        my $float_val = $val + 0; # enforce numeric context
+        # Pack to big-endian IEEE 754 64-bit double precision float
+        my $bin_str = unpack("B64", scalar reverse pack("d", $float_val));
+        return ($bin_str, 1, { "वास्तविकम्" => "सत्यम्", "वास्तविक_मूल्यम्" => "$float_val" }); # reals are inherently signed
     }
 
     $val =~ s/_//g;

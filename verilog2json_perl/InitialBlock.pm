@@ -42,7 +42,7 @@ sub initial_block {
         while ($line1 =~ /^$/) {            
             $line_no = $line_no+1;
             if ($line_no > $VerilogParser::max_line) {
-                die "Max line reached at check_module";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at check_module", $line_no);
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
@@ -101,7 +101,7 @@ sub initial_block {
             while ($line1 =~ /^$/) {
                 $line_no = $line_no+1;
                 if ($line_no > $VerilogParser::max_line) {
-                    die "Max line reached at initial_block";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at initial_block", $line_no);
                 }
                 $line1 .= $VerilogParser::verilog_file[$line_no];
                 chomp($line1);
@@ -118,7 +118,7 @@ sub initial_block {
                 if ($expect_end == 1) {
                     $end_occurred = 1;
                 } else {
-                    die "Extra end present";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Extra end present", $line_no);
                     $end_occurred =1;
                 }
             } elsif ($line1 =~ /^#(\d+)/) {
@@ -161,7 +161,7 @@ sub initial_block {
                     while ($line1 =~ /^$/) {
                         $line_no = $line_no+1;
                         if ($line_no > $VerilogParser::max_line) {
-                            die "Max line reached at initial_block";
+                            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at initial_block", $line_no);
                         }
                         $line1 .= $VerilogParser::verilog_file[$line_no];
                         chomp($line1);
@@ -170,14 +170,14 @@ sub initial_block {
                     if ($line1 =~ /;/) {
                         $line1 =~ s/;//;
                     } else {
-                        die "Semicolon missing at end of \$finish statement";
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Semicolon missing at end of \$finish statement", $line_no);
                     }
                 } elsif ($line1 =~ /\$display/) {
                     $line1 = $VerilogParser::verilog_file[$line_no];
                     while ($line1 !~ /;/) {
                         $line_no = $line_no+1;
                         if ($line_no > $VerilogParser::max_line) {
-                            die "Max line reached at initial_block";
+                            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at initial_block", $line_no);
                         }
                         $line1 .= $VerilogParser::verilog_file[$line_no];
                         chomp($line1);
@@ -193,7 +193,7 @@ sub initial_block {
                         $main_text = $1;
                         $var_list = $2;
                     } else {
-                        die " Print statement format is not correct";
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", " Print statement format is not correct", $line_no);
                     }
                     $var_list =~ s/\s*//g;
                     $main_text =~ s/%(\d*[ubohctsd])/<<%$1<</g;
@@ -216,7 +216,7 @@ sub initial_block {
 
                                        $print_statement = $print_statement.CheckExprInitialBlock::दशमाननिर्गमः ($var_parts[$part_no])."<<";
                                     } else {
-                                        die "Bare word $var_parts[$part_no] couldnot be identified in initial block";
+                                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Bare word $var_parts[$part_no] couldnot be identified in initial block", $line_no);
                                     }
                                 }
                                 $part_no++;
@@ -228,14 +228,14 @@ sub initial_block {
                         while ($line1 =~ /^$/) {
                             $line_no = $line_no+1;
                             if ($line_no > $VerilogParser::max_line) {
-                                die "Max line reached at initial_block";
+                                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at initial_block", $line_no);
                             }
                             $line1 .= $VerilogParser::verilog_file[$line_no];
                             chomp($line1);
                             $line1 =~ s/\s*//g;
                         }
                     } else {
-                        die "Error in print statement, Format specifier and variables donot match";
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in print statement, Format specifier and variables donot match", $line_no);
                     }
                     my $stt = ${VerilogParser::statement_line}."_वाक्यम्";
                     $json_var->{$stt} //= {};
@@ -247,19 +247,19 @@ sub initial_block {
                     $line1 = "";
                     $VerilogParser::statement_line = $VerilogParser::statement_line+1;                           
                 } else {
-                    die " Unsupported system tasks";
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", " Unsupported system tasks", $line_no);
                 }
             } elsif ($line1 =~ /endmodule|always/) {
-                die "Missing end at $line_no with line $line1";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Missing end at $line_no with line $line1", $line_no);
             } else {
-                die "Error occured $line1";
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error occured $line1", $line_no);
             }
             if ($end_occurred == 1) {
                 last;
            }
         }
     } else {
-        die "Error in $line_no from initial block";
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in $line_no from initial block", $line_no);
     } 
     return $line_no;    
 }
