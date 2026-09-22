@@ -26,7 +26,7 @@ sub always_block_elseif {
     my $conditional_expr1;
     if ($line1 =~ /\(([\w=!<>\?\|:&\+\-\*\/%^!~\(\)]+)\)/) {
         $conditional_expr1 = $1;
-        @conditional_expr = CheckExpr::create_postfix($conditional_expr1);
+        @conditional_expr = CheckExpr::create_postfix($conditional_expr1, $line_no);
     } else {
         Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from AlwaysBlockElseIf::always_block_else_if no proper expression", $line_no);
     }
@@ -124,7 +124,7 @@ sub always_block_elseif {
             my $var_name = $1;
             chomp($line1);
             my $statement;
-            my @statement_temp = CheckExpr::create_postfix($line1);
+            my @statement_temp = CheckExpr::create_postfix($line1, $line_no);
             $statement = join(" ",@statement_temp);
             my $stt = ${VerilogParser::statement_line}."_वाक्यम्";
             $json_var->{$stt} //= {};

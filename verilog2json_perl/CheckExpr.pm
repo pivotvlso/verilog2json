@@ -12,25 +12,35 @@ sub validate_operand;
 
 
 our %precedence = (
-        '~'  => 11, '!' => 11,
+        '~'  => 11, '!' => 11, '~&' => 11, '~|' => 11, '~^' => 11, '^~' => 11,
+        'U+' => 11, 'U-' => 11, 'U&' => 11, 'U|' => 11, 'U^' => 11,
         '*'  => 10, '/' => 10, '%' => 10,
         '+'  => 9, '-'  => 9,
         '<<' => 8, '>>' => 8,
         '<'  => 7, '<=' => 7, '>' => 7, '>=' => 7,
-        '==' => 6, '!=' => 6,
+        '==' => 6, '!=' => 6, '===' => 6, '!==' => 6,
         '&'  => 5,
         '^'  => 4,
         '|'  => 3,
         '&&' => 2,
         '||' => 1,
         '=' => 0, '+=' =>0, '-=' =>0,
-        '?:' => -1,    # ternary operator (lowest)
+        '?:' => -1, ':' => -1, '+:' => -1, '-:' => -1,
     );
     # Associativity (default left)
     our %assoc = (
         '~'  => 'right',
         '!'  => 'right',
-        '?:' => 'right',
+        '~&' => 'right',
+        '~|' => 'right',
+        '~^' => 'right',
+        '^~' => 'right',
+        'U+' => 'right',
+        'U-' => 'right',
+        'U&' => 'right',
+        'U|' => 'right',
+        'U^' => 'right',
+        '?:' => 'right', ':' => 'right', '+:' => 'right', '-:' => 'right',
         '='  => 'right',
         '+=' => 'right',
         '-=' => 'right'
@@ -39,7 +49,7 @@ our %precedence = (
 
 
 sub create_postfix {
-    my ($expr) = @_;
+    my ($expr, $line_no) = @_;
     my $i;
     my $j;
     my @stack;
@@ -47,44 +57,57 @@ sub create_postfix {
     # Operator precedence (higher number = higher precedence)
 
     $expr =~ s/;//g;
-    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[bodh][a-fA-F0-9]+|\d+|==|!=|<=|>=|=|<<|>>|\?|:|&&|\|\||[+\-*\/%<>&|^!~()?:])/g;
+    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[sS]?[bodhBODH][a-fA-F0-9xXzZ_]+|\d+|\*\*|<<<|>>>|===|!==|==|!=|<=|>=|=|<<|>>|\+:|\-:|\?|:|&&|\|\||~&|~\||~\^|\^~|[+\-*\/%<>&|^!~()?:{}\[\]])/g;
     my $stack_length=-1;
+    my $prev_was_operand = 0;
     foreach $i (@tokens) {
-        if ($i eq '(') {
+        if ($i =~ /^(?:\*\*|<<<|>>>|\{|\})$/) {
+            Diagnostics::report_diagnostic("Error", "ERR_UNSUPPORTED_OPERATOR", "Unsupported operator $i", $line_no);
+            $prev_was_operand = 0;
+        } elsif ($i eq '(' || $i eq '[') {
             push @stack,$i;
             $stack_length +=1;
-        } elsif ($i eq ')') {
+            $prev_was_operand = 0;
+        } elsif ($i eq ')' || $i eq ']') {
+            my $match = $i eq ')' ? '(' : '[';
             $j = pop @stack;
             $stack_length -= 1;
-            if ($j eq '(') {
-                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: Brackets empty", -1);
-            }
-            while ($j ne '(') {
+            while (defined $j && $j ne $match) {
                 push @output,$j;
                 if (!@stack) {
-                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: No start brackets found", -1);
+                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: No start brackets found", $line_no);
                 }
                 $j = pop @stack;
                 $stack_length -= 1;
             }
-        }  elsif (is_operator($i)) {
-            if ($stack_length == -1) {
-                push @stack, $i;
-                $stack_length += 1;
-            } elsif (is_operator($stack[$stack_length])) {
-                if ($precedence{$stack[$stack_length]} > $precedence{$i}) {
-                    push @output, $i;
-                } else {
-                    push @stack, $i;
-                    $stack_length += 1;
-                }
-                
-            } else {
-                push @stack, $i;
-                $stack_length += 1;
+            if ($i eq ']') {
+                push @output, "सूचकः";
             }
+            $prev_was_operand = 1;
+        }  elsif (is_operator($i)) {
+            if (!$prev_was_operand && $i =~ /^[+\-&|^]$/) {
+                $i = "U$i";
+            }
+            while ($stack_length >= 0 && is_operator($stack[$stack_length])) {
+                my $top = $stack[$stack_length];
+                # Since all our binary operators are left associative except assignments, and unary are right.
+                # If top has strictly greater precedence, pop.
+                # If equal precedence, pop if left associative.
+                my $assoc_i = exists $assoc{$i} ? $assoc{$i} : 'left';
+                if ($precedence{$top} > $precedence{$i} || 
+                   ($precedence{$top} == $precedence{$i} && $assoc_i eq 'left')) {
+                    push @output, pop @stack;
+                    $stack_length -= 1;
+                } else {
+                    last;
+                }
+            }
+            push @stack, $i;
+            $stack_length += 1;
+            $prev_was_operand = 0;
         } else {
             push @output, $i;
+            $prev_was_operand = 1;
         }
     }
     while (@stack) {

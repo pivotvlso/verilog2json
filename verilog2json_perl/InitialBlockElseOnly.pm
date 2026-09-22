@@ -105,7 +105,7 @@ sub initial_block_elseonly {
             chomp($line1);
             SemanticChecker::validate_assignment($lhs, $line_no);
             my $statement;
-            my @statement_temp = CheckExpr::create_postfix($line1);
+            my @statement_temp = CheckExpr::create_postfix($line1, $line_no);
             $statement = join(" ",@statement_temp);
             my $stt = ${VerilogParser::statement_line}."_वाक्यम्";
             $json_var->{$stt} //= {};

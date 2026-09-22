@@ -102,7 +102,7 @@ sub always_block_elseonly {
         } elsif ($line1 =~ /=/) { #Check for Statement
             my $var_name = $1;
             my $statement;
-            my @statement_temp = CheckExpr::create_postfix($line1);
+            my @statement_temp = CheckExpr::create_postfix($line1, $line_no);
             $statement = join(" ",@statement_temp);
             my $stt = ${VerilogParser::statement_line}."_वाक्यम्";
             $json_var->{$stt} //= {};

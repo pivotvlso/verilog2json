@@ -68,3 +68,32 @@ Verilog allows specifying drive strengths (e.g., `strong1`, `pull0`, `highz1`) o
 
 ## 9. Implicit Declarations
 Variables and nets must be explicitly declared before use (or explicitly mapped within the port list). The parser does not support implicit net declarations (i.e., using a wire in a structural assignment without explicitly declaring it with `wire` beforehand). All nets and variables must have a definitive declaration statement for the AST metadata generator to bind them correctly.
+
+## 10. Unsupported Operators (Chapter 5)
+The parser does not support the following operators from Chapter 5 (Table 5-1):
+- Power / Exponentiation: `**`
+- Arithmetic Shifts: `<<<` and `>>>`
+- Concatenation and Replication: `{ }` and `{ { } }`
+
+If the AST expression evaluator encounters these operators, it will explicitly halt parsing and throw an `ERR_UNSUPPORTED_OPERATOR` diagnostic error.
+
+
+## 11. Delays in Expressions
+The parser currently does not support Verilog time delay expressions (e.g., `#10` or `# (delay_value)`) within assignment statements, continuous assignments, or procedural blocks. Any delay operators encountered within an expression will likely cause string parsing corruption or trigger a diagnostic failure.
+
+**Fails:**
+```verilog
+assign #10 out = in;
+always @(a) begin
+    #5 out = a;
+    out <= #10 b;
+end
+```
+
+## 12. Signed/Unsigned System Functions
+The tool currently does not evaluate type-casting system functions such as `$signed()` or `$unsigned()`. Because system tasks starting with `$` are fundamentally unsupported by the expression parser (as noted in Section 4), attempting to pass variables through these casting functions will cause parsing corruption and potential diagnostic failures.
+
+**Fails:**
+```verilog
+assign out = $signed(a) + $signed(b);
+```

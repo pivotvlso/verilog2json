@@ -1,6 +1,0 @@
-Died at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/Diagnostics.pm line 19.
-
---- DIAGNOSTICS REPORT ---
-Error [ERR_REDECLARATION]: Redeclaration of parameter PARAM1 (Line 3)
---------------------------
-
