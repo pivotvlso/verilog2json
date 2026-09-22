@@ -99,9 +99,11 @@ sub initial_block_elseonly {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }
-        } elsif ($line1 =~ /=/) { #Check for Statement
-            my $var_name = $1;
+        } elsif ($line1 =~ /^\s*([^=]+?)\s*=\s*(.*)$/) { #Check for Statement
+            my $lhs = $1;
+            my $rhs = $2;
             chomp($line1);
+            SemanticChecker::validate_assignment($lhs, $line_no);
             my $statement;
             my @statement_temp = CheckExpr::create_postfix($line1);
             $statement = join(" ",@statement_temp);
@@ -126,14 +128,17 @@ sub initial_block_elseonly {
                 print "Semicolon missing at end of system tasks";
             }
             if ($line1 =~ /\$finish/) {
+                my $lhs;
+                if ($line1 =~ /^\s*([^=]+?)\s*=\s*\$/) {
+                    $lhs = $1;
+                    SemanticChecker::validate_assignment($lhs, $line_no);
+                }
                 my $stt = ${VerilogParser::statement_line}."_वाक्यम्";
                 $json_var->{$stt} //= {};
                 $json_var->{$stt}->{"प्रकारः"} = "समापनम्";
                 $json_var->{$stt}->{"क्रमः"} = $VerilogParser::statement_order;
                 $VerilogParser::statement_order = $VerilogParser::statement_order+1;
-                $line_no = $line_no+1;
-                $line1 =~ s/\$finish//;
-                
+                $line1 = "";
                 $VerilogParser::statement_line = $VerilogParser::statement_line+1;
             }         
         } elsif ($line1 =~ /endmodule|always/) {

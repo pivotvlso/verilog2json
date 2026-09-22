@@ -1,0 +1,6 @@
+Died at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/Diagnostics.pm line 19.
+
+--- DIAGNOSTICS REPORT ---
+Error [ERR_FATAL]: Illegal Syntax: Attempt to write to entire array or array slice without fully indexing unpacked dimensions for 'arrayb' (Line 3)
+--------------------------
+

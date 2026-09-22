@@ -156,6 +156,15 @@ sub populate_port_varga {
         } elsif ($port_desc =~ /time/ ) {
             $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
             $port_desc =~ s/time/[63:0]/;
+        } elsif ($port_desc =~ /parameter/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $port_desc =~ s/parameter//;
+        } elsif ($port_desc =~ /localparam/ ) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
+            $port_desc =~ s/localparam//;
+        } elsif ($port_desc =~ /^\s*(?:signed)?\s*(?:\[[^\]]*\])?\s*$/ ) {
+            # Untyped parameter/net, default to wire/reg equivalent type
+            $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "स्मृतिसम्पन्नम्";
         } else {
             Diagnostics::report_diagnostic("Error", "ERR_MISSING_PORT_DECL", "Missing port declaration", $line_no);
         }
@@ -268,6 +277,52 @@ sub populate_interconnect {
 
     } else {
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"प्रकारः"} = "तारः";
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"दिशा"} = "";
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "";
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"वर्गः"} = "";
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"क्रमः"} = -1;
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"द्वारम्"} = "असत्यम्";
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"अवगाढता"} = 0;
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"चरणम्"} = [];
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"चिह्नितम्"} = "असत्यम्";
+        populate_port_varga($port_name, $line1, $initial_value, $line_no, $unpacked_dims);
+    }
+    return $line_no;
+}
+
+sub populate_parameter {
+    my ($line_no) = @_;
+    my $line1 = $VerilogParser::verilog_file[$line_no];
+    while ($line1 !~ /;/) {
+        chomp($line1);
+        $line_no++;
+        if ($line_no > $VerilogParser::max_line) {
+            Diagnostics::report_diagnostic("Error", "ERR_MAX_LINE", "Max line reached at ModulePort.pm parameter parsing", $line_no);
+        }
+        $line1 .= $VerilogParser::verilog_file[$line_no];
+    }
+    chomp($line1);
+    $line1 =~ s/;//;
+    
+    my $initial_value = "";
+    if ($line1 =~ s/\s*=\s*(.*?)\s*$//) {
+        $initial_value = $1;
+    } else {
+        Diagnostics::report_diagnostic("Error", "ERR_PARAM_NO_VALUE", "Parameter declaration missing assigned value", $line_no);
+    }
+    
+    $line1 =~ /([A-Za-z][A-Za-z0-9_]*)(?:\s*\[[^\]]*\])*\s*$/;
+    my $port_name = $1;
+    my $unpacked_dims = "";
+    if ($line1 =~ s/\b$port_name\b(.*)$//) {
+        $unpacked_dims = $1;
+    }
+    
+    $line1 =~ s/\b(?:parameter|localparam)\b//g;
+    if (exists $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}) {
+        Diagnostics::report_diagnostic("Error", "ERR_REDECLARATION", "Redeclaration of parameter $port_name", $line_no);
+    } else {
+        $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"प्रकारः"} = "प्राचलम्";
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"दिशा"} = "";
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"निश्चितवर्गः"} = "";
         $JsonOutput::module_json{$VerilogParser::module_name}{$port_name}{"वर्गः"} = "";

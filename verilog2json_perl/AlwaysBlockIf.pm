@@ -123,9 +123,11 @@ sub always_comb_if {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }
-        } elsif ($line1 =~ /=/) { #Check for Statement
-            my $var_name = $1;
+        } elsif ($line1 =~ /^\s*([^=]+?)\s*(?:<=|=)\s*(.*)$/) { #Check for Statement
+            my $lhs = $1;
+            my $rhs = $2;
             chomp($line1);
+            SemanticChecker::validate_assignment($lhs, $line_no);
             my $statement;
             my @statement_temp = CheckExpr::create_postfix($line1);
             $statement = join(" ",@statement_temp);
@@ -135,7 +137,6 @@ sub always_comb_if {
             $json_var->{$stt}->{"वाक्यम्"} = $statement;
             $json_var->{$stt}->{"क्रमः"} = $VerilogParser::statement_order;
             $VerilogParser::statement_order = $VerilogParser::statement_order+1;
-            $line_no = $line_no+1;
             $line1 = "";
 
             if ($expect_end == 0) {

@@ -56,3 +56,15 @@ end
 
 ## 5. Attributes
 Verilog attributes using the `(* ... *)` syntax are currently unsupported. To prevent regex parsing failures and string extraction errors, the parser aggressively and silently ignores (strips out) all attributes during the initial file sanitization loop. The tool will parse the underlying logic, but any metadata contained within the attributes is lost.
+
+## 6. Parameters and Commas
+The same 1-variable-per-line parsing constraint from Section 3 also strictly applies to module-level parameters and localparams. We do not support parsing a comma-separated list of assignments in a single statement. 
+
+## 7. Namespaces and Hierarchical Identifiers
+The `verilog2json` converter does not currently support namespaces, packages, or hierarchical identifier resolution (e.g., `my_pkg::my_var` or `top.submodule.signal`). All identifiers are treated as simple, local names within their enclosing module scope. Using hierarchical paths in assignments or declarations will likely result in syntax errors or skipped expressions.
+
+## 8. Drive and Charge Strengths
+Verilog allows specifying drive strengths (e.g., `strong1`, `pull0`, `highz1`) or charge strengths (`small`, `medium`, `large`) in net declarations and continuous assignments. These strength qualifiers are strictly unsupported by the parser and will trigger fatal parsing failures (`ERR_UNKNOWN_BAREWORD`) if encountered. 
+
+## 9. Implicit Declarations
+Variables and nets must be explicitly declared before use (or explicitly mapped within the port list). The parser does not support implicit net declarations (i.e., using a wire in a structural assignment without explicitly declaring it with `wire` beforehand). All nets and variables must have a definitive declaration statement for the AST metadata generator to bind them correctly.

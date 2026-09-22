@@ -108,6 +108,8 @@ sub parse_verilog {
 
         } elsif ($VerilogParser::verilog_file[$i] =~ /^\s*(?:wire|reg|logic|integer|real|realtime|time)\b/) {
             $i = ModulePort::populate_interconnect($i);
+        } elsif ($VerilogParser::verilog_file[$i] =~ /^\s*(?:parameter|localparam)\b/) {
+            $i = ModulePort::populate_parameter($i);
         } elsif ($VerilogParser::verilog_file[$i] =~ /^\s*input/) {
             $i = ModulePort::populate_port_afterwards($i);
             
