@@ -57,22 +57,46 @@ sub create_postfix {
     # Operator precedence (higher number = higher precedence)
 
     $expr =~ s/;//g;
-    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[sS]?[bodhBODH][a-fA-F0-9xXzZ_]+|\d+|\*\*|<<<|>>>|===|!==|==|!=|<=|>=|=|<<|>>|\+:|\-:|\?|:|&&|\|\||~&|~\||~\^|\^~|[+\-*\/%<>&|^!~()?:{}\[\]])/g;
+    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[sS]?[bodhBODH][a-fA-F0-9xXzZ_]+|\d+|\*\*|<<<|>>>|===|!==|==|!=|<=|>=|=|<<|>>|\+:|\-:|\?|:|&&|\|\||~&|~\||~\^|\^~|[+\-*\/%<>&|^!~()?:{}\[\],])/g;
     my $stack_length=-1;
     my $prev_was_operand = 0;
     foreach $i (@tokens) {
-        if ($i =~ /^(?:\*\*|<<<|>>>|\{|\})$/) {
+        if ($i =~ /^(?:\*\*|<<<|>>>)$/) {
             Diagnostics::report_diagnostic("Error", "ERR_UNSUPPORTED_OPERATOR", "Unsupported operator $i", $line_no);
             $prev_was_operand = 0;
         } elsif ($i eq '(' || $i eq '[') {
             push @stack,$i;
             $stack_length +=1;
             $prev_was_operand = 0;
-        } elsif ($i eq ')' || $i eq ']') {
-            my $match = $i eq ')' ? '(' : '[';
+        } elsif ($i eq '{') {
+            if ($prev_was_operand) {
+                push @stack, "आवृत्तिः";
+                $stack_length +=1;
+            }
+            push @stack, "{1";
+            $stack_length +=1;
+            $prev_was_operand = 0;
+        } elsif ($i eq ',') {
             $j = pop @stack;
             $stack_length -= 1;
-            while (defined $j && $j ne $match) {
+            while (defined $j && $j !~ /^\{\d+$/) {
+                push @output, $j;
+                $j = pop @stack;
+                $stack_length -= 1;
+            }
+            if (!defined $j) {
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: Comma outside concatenation", $line_no);
+            } elsif ($j =~ /^\{(\d+)$/) {
+                my $n = $1 + 1;
+                push @stack, "{$n";
+                $stack_length += 1;
+            }
+            $prev_was_operand = 0;
+        } elsif ($i eq ')' || $i eq ']' || $i eq '}') {
+            my $match = $i eq ')' ? '(' : ($i eq ']' ? '[' : '{');
+            $j = pop @stack;
+            $stack_length -= 1;
+            while (defined $j && ($match eq '{' ? ($j !~ /^\{\d+$/) : ($j ne $match))) {
                 push @output,$j;
                 if (!@stack) {
                     Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from create_postfix: No start brackets found", $line_no);
@@ -82,6 +106,14 @@ sub create_postfix {
             }
             if ($i eq ']') {
                 push @output, "सूचकः";
+            } elsif ($i eq '}') {
+                if ($j =~ /^\{(\d+)$/) {
+                    push @output, "शृङ्खला$1";
+                }
+                if ($stack_length >= 0 && $stack[$stack_length] eq "आवृत्तिः") {
+                    push @output, pop @stack;
+                    $stack_length -= 1;
+                }
             }
             $prev_was_operand = 1;
         }  elsif (is_operator($i)) {
@@ -111,7 +143,11 @@ sub create_postfix {
         }
     }
     while (@stack) {
-        push @output, pop @stack;
+        my $top = pop @stack;
+        if ($top eq '(' || $top eq '[' || $top =~ /^\{\d+$/) {
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Unmatched bracket in expression", $line_no);
+        }
+        push @output, $top;
     }
     return @output;
 }

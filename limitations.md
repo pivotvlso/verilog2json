@@ -73,7 +73,7 @@ Variables and nets must be explicitly declared before use (or explicitly mapped 
 The parser does not support the following operators from Chapter 5 (Table 5-1):
 - Power / Exponentiation: `**`
 - Arithmetic Shifts: `<<<` and `>>>`
-- Concatenation and Replication: `{ }` and `{ { } }`
+
 
 If the AST expression evaluator encounters these operators, it will explicitly halt parsing and throw an `ERR_UNSUPPORTED_OPERATOR` diagnostic error.
 
@@ -97,3 +97,19 @@ The tool currently does not evaluate type-casting system functions such as `$sig
 ```verilog
 assign out = $signed(a) + $signed(b);
 ```
+
+## 13. Instantiation Port Connections
+The parser supports standard identifiers, array slicing (e.g. `[3:0]`), direct numeric literals (e.g. `1'b1`), empty (unconnected) ports, as well as concatenations (e.g. `{a, b}`) and replications (e.g. `{2{a}}`) when parsing module instantiations. However, it strictly does NOT support complex expressions (e.g. `a & b`) as port connections. Any such operations will break the connection matching logic and trigger an `ERR_FATAL` parsing crash.
+
+**Fails:**
+```verilog
+my_module u1 (.clk(a & b));
+```
+
+## 14. Gate and Module Instantiation Constraints (Chapter 7)
+The parser treats built-in gate primitives (e.g. `and`, `not`, `bufif0`) identically to standard module instantiations. However, there are unsupported instantiation syntax variants:
+- **Instance Delays:** Passing delays during instantiation (e.g. `and #(10) a1(...)`) is not supported.
+- **Instance Ranges (Arrays of Instances):** Creating an array of instances using range syntax (e.g. `my_module u1 [3:0] (...)` or `and a1 [3:0] (...)`) is not supported.
+- **Switches and Drive Strengths:** Drive strengths and switch-level modeling are explicitly unsupported.
+## 15. User-Defined Primitives (UDP) (Chapter 8)
+The parser does not support User-Defined Primitives (UDPs). Any use of the primitive or endprimitive keywords, or attempts to model combinational/sequential logic using UDP state tables, will fail to parse and trigger a parsing crash. All primitives must be constructed using the standard IEEE built-in gate primitives or standard modules.

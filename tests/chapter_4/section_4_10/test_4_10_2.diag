@@ -1,6 +1,0 @@
-Died at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/Diagnostics.pm line 19.
-
---- DIAGNOSTICS REPORT ---
-Error [ERR_UNKNOWN_BAREWORD]: Unknown bareword     parameter signed [31:0]  in ModulePort::populate_port_varga (Line 2)
---------------------------
-

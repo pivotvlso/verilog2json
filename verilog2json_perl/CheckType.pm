@@ -25,7 +25,7 @@ sub check_type {
         Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from Check_Type::check_type proc; Unknown bareword $line1", $line_no);
     }
     $line1 =~ s/$first_word//;
-    $line1 =~ s/\s//;
+    $line1 =~ s/^\s*//;
     if ($line1 =~ /^;$/) {
         return $line_no;
     }
@@ -48,7 +48,7 @@ sub check_type {
         Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from Check_Type::check_type proc; Unknown bareword $line1", $line_no);
     }
     $line1 =~ s/$second_word//;
-    $line1 =~ s/\s//;
+    $line1 =~ s/^\s*//;
     if ($line1 =~ /^;$/) {
         return $line_no;
     }
@@ -70,6 +70,7 @@ sub check_type {
     }
     
     if ($line1 =~ /^\s*$/) {
+        $instance_no++;
         return $line_no;
     } else {
         Diagnostics::report_diagnostic("Error", "ERR_FATAL", " Need to handle unknown statements in CheckType::check_type with bareword $line1\n", $line_no);
@@ -144,9 +145,10 @@ sub named_port_connection {
         } else {
             Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::named_port_connection", $line_no);
         }
-        if ($line1 =~ s/^\s*([A-Za-z][A-Za-z0-9_]*)\s*//) {
-            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{"द्वारसंयोजनम्"} = $1;
-
+        if ($line1 =~ s/^\s*([A-Za-z0-9_][A-Za-z0-9_\[\]\:\']*|\{(?:[^{}]+|(?1))*\})\s*//) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारसंयोजनम्"} = $1;
+        } elsif ($line1 =~ /^\s*[,)]/) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारसंयोजनम्"} = "";
         } else {
             Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error from CheckType::named_port_connection with bareword $line1", $line_no);
         }
@@ -160,21 +162,27 @@ sub named_port_connection {
             chomp($line1);
             $line1 =~ s/\s*//g;
         }
-        if ($line1 =~ s/\)//) {
-            last;
-        } elsif ($line1 =~ /,/) {
-            $line1 =~ s/,//;
-            while ($line1 =~ /^$/) {   
-                $line_no = $line_no+1;
-                if ($line_no > $VerilogParser::max_line) {
-                    Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
+        if ($line1 =~ s/^\s*\)//) {
+            # Port mapping closed. Check what's next.
+            if ($line1 =~ s/^\s*,//) {
+                # More ports to come
+                while ($line1 =~ /^$/) {   
+                    $line_no = $line_no+1;
+                    if ($line_no > $VerilogParser::max_line) {
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Max line reached at CheckType::named_port_connection after second_word", $line_no);
+                    }
+                    $line1 .= $VerilogParser::verilog_file[$line_no];
+                    chomp($line1);
+                    $line1 =~ s/\s*//g;
                 }
-                $line1 .= $VerilogParser::verilog_file[$line_no];
-                chomp($line1);
-                $line1 =~ s/\s*//g;
+            } elsif ($line1 =~ s/^\s*\)//) {
+                # End of instantiation
+                last;
+            } else {
+                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::named_port_connection with extra bareword $line1", $line_no);
             }
         } else {
-            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Error in CheckType::named_port_connection with extra bareword $line1", $line_no);
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Missing closing parenthesis for named port in CheckType::named_port_connection", $line_no);
         }
     }
     while ($line1 =~ /^\s*$/) {   
@@ -201,11 +209,13 @@ sub ordered_port_connection {
     while(1) {
         $instance_port_no = $instance_port_no+1;
 
-        if ($line1 =~ /^\s*[A-Za-z]/) {
-
-            $line1 =~ s/^\s*([A-Za-z][A-Za-z0-9_\[\]]*)//;
-
+        if ($line1 =~ s/^\s*([A-Za-z0-9_][A-Za-z0-9_\[\]\:\']*|\{(?:[^{}]+|(?1))*\})\s*//) {
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारसंयोजनम्"} = $1;
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"रूपद्वारम्"} = "";
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"प्रकारः"} = "द्वारक्रमः";
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारक्रमः"} = $instance_port_no;
+        } elsif ($line1 =~ /^\s*[,)]/) {
+            $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारसंयोजनम्"} = "";
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"रूपद्वारम्"} = "";
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"प्रकारः"} = "द्वारक्रमः";
             $JsonOutput::module_json{$VerilogParser::module_name}{${instance_no}."_प्रतिरूपम्"}{${instance_port_no}."_द्वारक्रमः"}{"द्वारक्रमः"} = $instance_port_no;
