@@ -99,6 +99,11 @@ sub always_block_elseonly {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }            
+        } elsif ($line1 =~ /^\s*;\s*$/) { # Null statement
+            $line1 = "";
+            if ($expect_end == 0) {
+                $end_occurred = 1;
+            }
         } elsif ($line1 =~ /=/) { #Check for Statement
             my $var_name = $1;
             my $statement;
@@ -110,7 +115,6 @@ sub always_block_elseonly {
             $json_var->{$stt}->{"वाक्यम्"} = $statement;
             $json_var->{$stt}->{"क्रमः"} = $VerilogParser::statement_order;
             $VerilogParser::statement_order = $VerilogParser::statement_order+1;
-            $line_no = $line_no+1;
             $line1 = "";
             $VerilogParser::statement_line = $VerilogParser::statement_line+1;
             if ($expect_end == 0) {

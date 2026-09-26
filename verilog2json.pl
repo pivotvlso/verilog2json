@@ -14,6 +14,7 @@ use AlwaysBlockElseIf;
 use AlwaysBlockElseOnly;
 use AlwaysBlockIf;
 use InitialBlock;
+use CombCkt;
 use InitialBlockElseIf;
 use InitialBlockIf;
 use InitialBlockElseOnly;

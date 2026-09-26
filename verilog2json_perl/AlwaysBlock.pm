@@ -23,22 +23,28 @@ sub always_block {
     my $kaladeenam;
     my $samvedanasoochi;
     if ($line1 =~ /always/) {
-        my $line_dup = $line1;
-        $line_dup =~ s/\s*//g;
-        if ($line_dup =~ /always_comb/) {
-        } elsif ($line_dup =~ /always@\(\*\)/) {
-            $line1 =~ s/^\s*always\s*@\s*\(\s*\*\s*\)/always_comb/;
-        } elsif ($line_dup =~ /always@*/) {
-            $line1 =~ s/^\s*always\s*@\s*\*/always_comb/;
-        } else {
-            Diagnostics::report_diagnostic("Error", "ERR_FATAL", " Error from check_always in matching always line", $line_no);
-        }
-        if ($line1 =~ /always_comb/) {
-            $line1 =~ s/always_comb//;
+        if ($line1 =~ /^\s*always_comb\b/) {
+            $line1 =~ s/^\s*always_comb//;
             $kaladeenam = "न";
-            $samvedanasoochi ="*"
+            $samvedanasoochi = "*";
+        } elsif ($line1 =~ /^\s*always\s*@\s*\(\s*(.*?)\s*\)/) {
+            $samvedanasoochi = $1;
+            $line1 =~ s/^\s*always\s*@\s*\(\s*.*?\s*\)//;
+            if ($samvedanasoochi eq '*' || $samvedanasoochi !~ /posedge|negedge/) {
+                $kaladeenam = "न";
+            } else {
+                $kaladeenam = "आम्";
+            }
+        } elsif ($line1 =~ /^\s*always\s*@\s*\*/) {
+            $line1 =~ s/^\s*always\s*@\s*\*//;
+            $kaladeenam = "न";
+            $samvedanasoochi = "*";
+        } elsif ($line1 =~ /^\s*always\b/) {
+            $line1 =~ s/^\s*always//;
+            $kaladeenam = "न";
+            $samvedanasoochi = "";
         } else {
-                Diagnostics::report_diagnostic("Error", "ERR_FATAL", "From AlwaysBlock ; To be updated later", $line_no);
+            Diagnostics::report_diagnostic("Error", "ERR_FATAL", "From AlwaysBlock ; To be updated later", $line_no);
         }
         while ($line1 =~ /^$/) {
               $line_no = $line_no+1;
@@ -95,8 +101,9 @@ sub always_block {
         $json_var->{"प्रकारः"} = "सदाङ्गम्";
         $json_var->{"क्रमः"} = $VerilogParser::statement_order;
         $always_block_count = $always_block_count+1;
-        $json_var->{"संवेदनसूची"} = "";
-        $json_var->{"कालाधीनम्"} = ""; #आम् न
+        $json_var->{"संवेदनसूची"} = $samvedanasoochi;
+        $json_var->{"कालाधीनम्"} = $kaladeenam; #आम् न
+        $AlwaysBlock::current_kaladeenam = $kaladeenam;
         $VerilogParser::statement_order = $VerilogParser::statement_order+1;
         while(1) {
             while ($line1 =~ /^$/) {
@@ -106,6 +113,7 @@ sub always_block {
                 }
                 $line1 .= $VerilogParser::verilog_file[$line_no];
                 chomp($line1);
+                $line1 =~ s/#\s*(\d+)/#\($1\)/g;
                 $line1 =~ s/\s*//g;
             }
             if ($line1 =~ /^\s*if/) { #Check for IF loop
@@ -132,10 +140,24 @@ sub always_block {
 
 
 
-            } elsif ($line1 =~ /^\s*([^=]+?)\s*(?:<=|=)\s*(.*)$/) { #Check for Statement
+            } elsif ($line1 =~ /^\s*;\s*$/) { # Null statement
+                $line1 = "";
+                if ($expect_end == 0) {
+                    $end_occurred = 1;
+                }
+            } elsif ($line1 =~ /^\s*([^=]+?)\s*(<=|=)\s*(.*)$/) { #Check for Statement
                 my $lhs = $1;
-                my $rhs = $2;
+                my $operator = $2;
+                my $rhs = $3;
                 chomp($line1);
+                
+                if (defined $AlwaysBlock::current_kaladeenam) {
+                    if ($AlwaysBlock::current_kaladeenam eq "आम्" && $operator eq '=') {
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Blocking assignment '=' used in sequential always block", $line_no);
+                    } elsif ($AlwaysBlock::current_kaladeenam eq "न" && $operator eq '<=') {
+                        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Non-blocking assignment '<=' used in combinational always block", $line_no);
+                    }
+                }
                 
                 SemanticChecker::validate_assignment($lhs, $line_no);
                 

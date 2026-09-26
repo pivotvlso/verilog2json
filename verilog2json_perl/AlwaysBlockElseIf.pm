@@ -120,6 +120,11 @@ sub always_block_elseif {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }    
+        } elsif ($line1 =~ /^\s*;\s*$/) { # Null statement
+            $line1 = "";
+            if ($expect_end == 0) {
+                $end_occurred = 1;
+            }
         } elsif ($line1 =~ /([a-zA-Z_]+)=/) { #Check for Statement
             my $var_name = $1;
             chomp($line1);

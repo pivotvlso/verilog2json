@@ -59,4 +59,37 @@ sub validate_assignment {
     }
 }
 
+sub validate_continuous_assignment {
+    my ($lhs, $line_no) = @_;
+    
+    if ($lhs =~ /^\{/) {
+        my $stripped = $lhs;
+        $stripped =~ s/[\{\}]//g;
+        my @parts = split(/,/, $stripped);
+        foreach my $part (@parts) {
+            validate_continuous_assignment($part, $line_no);
+        }
+        return;
+    }
+    
+    $lhs =~ s/\s*//g;
+    
+    my $var_name;
+    if ($lhs =~ /^([A-Za-z_]\w*)(.*)$/) {
+        $var_name = $1;
+    } else {
+        return;
+    }
+    
+    if (!exists $JsonOutput::module_json{$VerilogParser::module_name}{$var_name}) {
+        return;
+    }
+    
+    my $var_data = $JsonOutput::module_json{$VerilogParser::module_name}{$var_name};
+    
+    if (exists $var_data->{"निश्चितवर्गः"} && $var_data->{"निश्चितवर्गः"} eq "स्मृतिसम्पन्नम्") {
+        Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Illegal Syntax: Continuous assignment to a reg/variable type '$var_name' is not allowed.", $line_no);
+    }
+}
+
 1;

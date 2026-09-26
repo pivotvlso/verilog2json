@@ -1,0 +1,6 @@
+Died at C:/Users/rnish/vscode/Pasupathi/pivotvlsi/verilog2json/verilog2json_perl/Diagnostics.pm line 19.
+
+--- DIAGNOSTICS REPORT ---
+Error [ERR_FATAL]: Blocking assignment '=' used in sequential always block (Line 13)
+--------------------------
+

@@ -56,11 +56,20 @@ sub create_postfix {
     my @output;
     # Operator precedence (higher number = higher precedence)
 
+    if ($expr =~ /^\s*@\s*\(/ || $expr =~ /^\s*@\s*[a-zA-Z_]\w*/) {
+        Diagnostics::report_diagnostic("Error", "ERR_UNSUPPORTED_CONTROL", "Intra-assignment event controls are not supported", $line_no);
+    }
+    
+    if ($expr =~ /^\s*repeat\s*\(/) {
+        Diagnostics::report_diagnostic("Error", "ERR_UNSUPPORTED_CONTROL", "Intra-assignment event controls are not supported", $line_no);
+    }
+
     $expr =~ s/;//g;
-    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[sS]?[bodhBODH][a-fA-F0-9xXzZ_]+|\d+|\*\*|<<<|>>>|===|!==|==|!=|<=|>=|=|<<|>>|\+:|\-:|\?|:|&&|\|\||~&|~\||~\^|\^~|[+\-*\/%<>&|^!~()?:{}\[\],])/g;
+    my @tokens = $expr =~ /([A-Za-z_]\w*|\d*\'[sS]?[bodhBODH][a-fA-F0-9xXzZ_]+|#\(\d+\)|#\d+|\d+|\*\*|<<<|>>>|===|!==|==|!=|<=|>=|=|<<|>>|\+:|\-:|\?|:|&&|\|\||~&|~\||~\^|\^~|[+\-*\/%<>&|^!~()?:{}\[\],])/g;
     my $stack_length=-1;
     my $prev_was_operand = 0;
     foreach $i (@tokens) {
+        $i =~ s/[()]//g if $i =~ /^#\(\d+\)$/;
         if ($i =~ /^(?:\*\*|<<<|>>>)$/) {
             Diagnostics::report_diagnostic("Error", "ERR_UNSUPPORTED_OPERATOR", "Unsupported operator $i", $line_no);
             $prev_was_operand = 0;

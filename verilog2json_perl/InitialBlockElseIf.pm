@@ -94,6 +94,7 @@ sub initial_block_elseif {
             }
             $line1 .= $VerilogParser::verilog_file[$line_no];
             chomp($line1);
+            $line1 =~ s/#\s*(\d+)/#\($1\)/g;
             $line1 =~ s/\s*//g;        
         } 
         if ($line1 =~ /^end$/) {
@@ -103,7 +104,7 @@ sub initial_block_elseif {
                 Diagnostics::report_diagnostic("Error", "ERR_FATAL", "Extra end present", $line_no);
                 $end_occurred =1;
             }
-        } elsif ($line1 =~ /^#(\d+)/) {
+        } elsif ($line1 =~ /^#\(?(\d+)\)?/) {
             my $delay_val = $1;
             my $stt = ${InitialBlock::delay_val_cnt}."_विलम्बाङ्गम्";
             $json_var->{$stt} //= {}; 
@@ -120,8 +121,15 @@ sub initial_block_elseif {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }
-        } elsif ($line1 =~ /([a-zA-Z_]+)=/) { #Check for Statement
-            my $var_name = $1;
+        } elsif ($line1 =~ /^\s*;\s*$/) { # Null statement
+            $line1 = "";
+            if ($expect_end == 0) {
+                $end_occurred = 1;
+            }
+        } elsif ($line1 =~ /^\s*([^=]+?)\s*(<=|=)\s*(.*)$/) { #Check for Statement
+            my $lhs = $1;
+            my $operator = $2;
+            my $rhs = $3;
             chomp($line1);
             my $statement;
             my @statement_temp = CheckExpr::create_postfix($line1, $line_no);

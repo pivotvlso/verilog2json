@@ -123,6 +123,11 @@ sub always_comb_if {
             if ($expect_end == 0) {
                 $end_occurred = 1;
             }
+        } elsif ($line1 =~ /^\s*;\s*$/) { # Null statement
+            $line1 = "";
+            if ($expect_end == 0) {
+                $end_occurred = 1;
+            }
         } elsif ($line1 =~ /^\s*([^=]+?)\s*(?:<=|=)\s*(.*)$/) { #Check for Statement
             my $lhs = $1;
             my $rhs = $2;

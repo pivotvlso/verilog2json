@@ -113,3 +113,21 @@ The parser treats built-in gate primitives (e.g. `and`, `not`, `bufif0`) identic
 - **Switches and Drive Strengths:** Drive strengths and switch-level modeling are explicitly unsupported.
 ## 15. User-Defined Primitives (UDP) (Chapter 8)
 The parser does not support User-Defined Primitives (UDPs). Any use of the primitive or endprimitive keywords, or attempts to model combinational/sequential logic using UDP state tables, will fail to parse and trigger a parsing crash. All primitives must be constructed using the standard IEEE built-in gate primitives or standard modules.
+
+## 16. Behavioral Modeling (Chapter 9)
+The parser currently supports a limited subset of behavioral modeling:
+- initial blocks are fully supported.
+- Combinational lways blocks are supported and must be declared using lways_comb, lways @*, or lways @(*).
+- Edge-triggered procedural blocks are supported, provided they follow standard edge definitions (e.g., lways @(posedge clk) or lways @(negedge reset or posedge clk)). The parser classifies these as sequential (?????????: ???) and retains their exact sensitivity list (??????????). Explicitly named pure combinational sensitivity lists without edges (e.g., lways @(a or b)) remain unsupported and should use lways @*.
+- Inter-assignment delays (e.g., `#10 a = 1;`) are supported inside procedural blocks.
+- Intra-assignment delays (e.g., `a = #10 1;`) are supported inside procedural blocks.
+- Intra-assignment event controls (e.g., `a = @(posedge clk) b;`) are explicitly **NOT supported**.
+- Repeat event controls (e.g., `a = repeat(3) @(posedge clk) b;`) are explicitly **NOT supported**.
+- Procedural continuous assignments (`assign`, `deassign`, `force`, `release`) inside `initial` or `always` blocks are explicitly **NOT supported**.
+- `case`, `casex`, and `casez` statements are explicitly **NOT supported**.
+- Loop statements (`for`, `while`, `forever`, `repeat` loops) are explicitly **NOT supported**.
+- Parallel blocks (`fork` and `join`) are explicitly **NOT supported**.
+- Standalone event controls (e.g., `@(posedge clk);`), named events (`-> event_name;`), and `wait` statements are explicitly **NOT supported**.
+- **Strict Assignment Operator Rules:**
+  - Sequential `always` blocks (`posedge`/`negedge`) ONLY allow non-blocking assignments (`<=`). Blocking assignments (`=`) will trigger a fatal parser exception.
+  - Combinational `always` blocks (`always_comb`, `always @*`) ONLY allow blocking assignments (`=`). Non-blocking assignments (`<=`) will trigger a fatal parser exception.
